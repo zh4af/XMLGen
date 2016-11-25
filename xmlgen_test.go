@@ -20,6 +20,11 @@ package main
 import (
 	"bytes"
 	"encoding/xml"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"os/exec"
 	"reflect"
 	"testing"
 )
@@ -133,4 +138,27 @@ func TestSanitizier(t *testing.T) {
 			t.Fatalf("Source: %q Expected: %q Got: %q\n", testCase.Source, testCase.Sanitized, sanitized.String())
 		}
 	}
+}
+
+// parse tcx(garmin's trainning center xml) data formate.
+func TestParseTcx(t *testing.T) {
+	var err error
+	r, _ := http.NewRequest("GET", "https://developer.garmin.com/downloads/connect-api/sample_file.tcx", nil)
+	resp, _ := http.DefaultClient.Do(r)
+	p, _ := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	f, _ := os.Create("sample_file.tcx")
+	f.Write(p)
+	f.Close()
+
+	cmd := exec.Command("XMLGen", "sample_file.tcx")
+	reader, err := cmd.StdoutPipe()
+	err = cmd.Start()
+	// err = cmd.Run()
+	if nil != err {
+		log.Printf("parse tcx formate err: %v", err)
+		return
+	}
+	p, err = ioutil.ReadAll(reader)
+	log.Printf("%s\n", string(p))
 }

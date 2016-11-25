@@ -221,6 +221,18 @@ func (t *Tree) formatHelper(depth int) (r string) {
 	// Print the name of the current element.
 	r += indent + t.Name.String() + " "
 
+	if depth == 1 {
+		r += "xml.Name"
+		r += " " + t.Tag()
+		r += "\n"
+
+		// Recurse for each child of the struct.
+		for _, child := range t.Children {
+			r += child.formatHelper(depth + 1)
+		}
+		return
+	}
+
 	// On return append a tag if the field name differs from the parsed name.
 	defer func() {
 		if depth != 0 {
@@ -285,7 +297,7 @@ func (tree *Tree) Populate(decoder *xml.Decoder) {
 			}
 
 		case xml.EndElement:
-			if len(current.Children) > 1 {
+			if len(current.Children) > 0 {
 				current.Type = Struct
 			} else {
 				current.Type = String
